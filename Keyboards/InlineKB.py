@@ -1,11 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
-#Общая клавиатура в чате
-kb_main = ReplyKeyboardMarkup(one_time_keyboard=True, row_width=3, resize_keyboard=True)
-kb1 = KeyboardButton('/Make_order')
-kb2 = KeyboardButton('/Discounts')
-kb_main.add(kb1,kb2)
 
 #Клавиатура под сообщением с выбором товара (клубника или рассада)
 ikb_order = InlineKeyboardMarkup(row_width=2)
@@ -46,5 +39,19 @@ ikb_vs2 = InlineKeyboardButton(text='256 кустов',
 ikb_vs3 = InlineKeyboardButton(text='512 кустов',
                                callback_data='Seed_volume3')
 ikb_vs4 = InlineKeyboardButton(text='Свой вариант количества кустов',
-                               callback_data='Seed_more')
+                               callback_data='Seed_volume_more')
 ikb_volume_seed.add(ikb_vs1,ikb_vs2,ikb_vs3).add(ikb_vs4)
+
+#Клавиатура для запроса номера телефона
+ikb_phone_number = InlineKeyboardMarkup(row_width=1)
+ikb_phone = InlineKeyboardButton(text='Поделиться номером телефона',
+                                 request_contact=True,
+                                 callback_data='Phone')
+ikb_phone_number.add(ikb_phone)
+
+#Клавиатура для запроса номера локации
+ikb_location_ask = InlineKeyboardMarkup(row_width=1)
+ikb_location = InlineKeyboardButton(text='Поделиться расположением',
+                                    request_location=True,
+                                    callback_data='location')
+ikb_location_ask.add(ikb_location)
