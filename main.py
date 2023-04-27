@@ -7,8 +7,6 @@ from handlers import client, others
 async def on_startup(_):
     print('Okay, lets go!')
 
-
-
 client.register_handlers_client(dp)
 
 
