@@ -10,7 +10,6 @@ from handlers.client import FSM_client
 async def callback_make_order(callback: types.CallbackQuery, state: FSMContext):
     cb = callback.data
     await state.update_data(start_order=cb)
-    print(await state.get_data())
     if cb == 'Клубника':
         await callback.message.reply(text='Сколько килограм вы хотите заказать?',
                                      reply_markup=InlineKB.ikb_Straw)
