@@ -27,7 +27,6 @@ class FSM_client(StatesGroup):
 async def command_start(message: types.Message):
     user_id = message.from_user.id
     print(user_id)
-    user_name = message.from_user.first_name
     user_full_name = message.from_user.full_name
     logging.info(f'{user_id=} {user_full_name=} {time.asctime()}')
     await bot.send_message(chat_id=message.from_user.id,
@@ -38,7 +37,8 @@ async def command_start(message: types.Message):
 async def command_admin_id(message: types.Message):
     global ID
     ID = message.from_user.id
-    await message.reply(text='Новый получатель заказов установлен')
+    uname = message.from_user.full_name
+    await message.reply(text=f'Теперь вы получаете заказы, {uname}')
     await message.delete()
 
 async def command_help(message: types.Message):
@@ -47,7 +47,8 @@ async def command_help(message: types.Message):
 
 
 async def command_info(message: types.Message):
-    await message.reply(text=MessageBox.INFO_MESSAGE)
+    await message.reply(text=MessageBox.INFO_MESSAGE,
+                        parse_mode='html')
     await message.delete()
 
 
@@ -82,14 +83,16 @@ async def request_extra_volume(message: types.Message, state: FSMContext):
     if 'volume_product' in result:
         if int(message.text)%64 == 0 and int(message.text) > 512:
             await state.update_data(extra_volume_product=message.text)
-            await message.answer(text=MessageBox.MORE_ANSWER)
+            await message.answer(text=MessageBox.MORE_ANSWER,
+                                 parse_mode='html')
             await FSM_client.client_location.set()
         else:
             await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
     else:
         if int(message.text) > 9:
             await state.update_data(extra_volume_product=message.text)
-            await message.answer(text=MessageBox.MORE_ANSWER)
+            await message.answer(text=MessageBox.MORE_ANSWER,
+                                 parse_mode='html')
             await FSM_client.client_location.set()
         else:
             await message.answer('Извините, объем клубники должен быть больше 9кг')
@@ -98,7 +101,8 @@ async def request_location(message: types.Message, state: FSMContext):
     if 'ул' in message.text or 'д.' in message.text or 'кв.' in message.text:
         await state.update_data(client_location=message.text)
         await message.answer('Введите пожалуйста ваш номер телефона\n'
-                             'Пример: +7987*******')
+                             '<b>Пример:</b> +7987*******',
+                             parse_mode='html')
         await FSM_client.client_phone.set()
     else:
         await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером и попробуйте ещё раз')
@@ -110,11 +114,12 @@ async def request_phone(message: types.Message, state: FSMContext):
         await state.update_data(client_phone=message.text)
         result = await state.get_data()
         await message.answer(text=MessageBox.Respond_request_phone)
-        await bot.send_message(ID, f'<b>Новый заказ<b>:\n'
-                                   f'Время: {time.asctime()}\n'
-                                   f'ФИО: {user_full_name}\n'
+        await bot.send_message(ID, f'<b>Новый заказ</b>:\n'
+                                   f'<b>Время</b>: {time.asctime()}\n'
+                                   f'<b>ФИО</b>: {user_full_name}\n'
                                    f'@{user_name}\n'
-                                   f'Заказ:\n{result}')
+                                   f'<b>ЗАКАЗ</b>:\n{result}',
+                               parse_mode='html')
 
         await state.finish()
     else:

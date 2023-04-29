@@ -28,11 +28,14 @@ async def callback_kg_value(callback: types.CallbackQuery, state: FSMContext):
         await FSM_client.extra_volume_product.set()
     else:
         if cb == '3кг':
-            await callback.message.reply(text=MessageBox.KG3_ANSWER)
+            await callback.message.reply(text=MessageBox.KG3_ANSWER,
+                                         parse_mode='html')
         elif cb == '6кг':
-            await callback.message.reply(text=MessageBox.KG6_ANSWER)
+            await callback.message.reply(text=MessageBox.KG6_ANSWER,
+                                         parse_mode='html')
         elif cb == '9кг':
-            await callback.message.reply(text=MessageBox.KG9_ANSWER)
+            await callback.message.reply(text=MessageBox.KG9_ANSWER,
+                                         parse_mode='html')
         await FSM_client.client_location.set()
 
 
@@ -55,11 +58,14 @@ async def callback_bush_value(callback: types.CallbackQuery, state: FSMContext):
         await FSM_client.extra_volume_product.set()
     else:
         if callback.data == '128_кустов':
-            await callback.message.reply(text=MessageBox.BUSH_128_ANSWER)
+            await callback.message.reply(text=MessageBox.BUSH_128_ANSWER,
+                                         parse_mode='html')
         elif callback.data == '256_кустов':
-            await callback.message.reply(text=MessageBox.BUSH_256_ANSWER)
+            await callback.message.reply(text=MessageBox.BUSH_256_ANSWER,
+                                         parse_mode='html')
         elif callback.data == '512_кустов':
-            await callback.message.reply(text=MessageBox.BUSH_512_ANSWER)
+            await callback.message.reply(text=MessageBox.BUSH_512_ANSWER,
+                                         parse_mode='html')
         await FSM_client.client_location.set()
 
 def register_handlers_callback(dp: Dispatcher):
