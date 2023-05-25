@@ -26,16 +26,16 @@ class BotDB:
                             (user_id, join_date, name, nick_name))
         return self.conn.commit()
 
-    def record_client_data(self, phone_number, adress):
+    def record_client_data(self, phone_number, adress, user_id):
         """Добавляем данные клиента"""
-        self.cursor.execute("INSERT INTO clients ('phone_number', 'adress') VALUES (?, ?)",
-                            (phone_number, adress))
+        self.cursor.execute("UPDATE clients SET phone_number = ?, adress = ? WHERE user_id = ?",
+                            (phone_number, adress, user_id))
         return self.conn.commit()
 
     def record_order(self, user_id, product_type, product_subtype, volume_product, date):
         """Добавляем данные по заказу"""
         self.cursor.execute("INSERT INTO orders ('user_id', 'product_type', 'product_subtype', 'volume_product', 'date') VALUES (?, ?, ?, ?, ?)",
-                            (user_id, product_type, product_subtype, volume_product, time.asctime(date)))
+                            (user_id, product_type, product_subtype, volume_product, date))
         return self.conn.commit()
     def close(self):
         """Закрытие соединения с БД"""

@@ -1,7 +1,5 @@
-import logging
 import time
-import string
-import logging
+
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -13,14 +11,13 @@ from create_bot import bot
 from db import BotDB
 from Config import RECEIVE_ID
 
-ID = None # ID нужно поменять через команду admin_id
+
 
 class FSM_client(StatesGroup):
     type_product = State()
     sub_type_product = State()
-    volume_product = State()
-    volume_product2 = State()
-    extra_volume_product = State()
+    volume_berry = State()
+    volume_bush = State()
     client_location = State()
     client_phone = State()
 
@@ -81,25 +78,22 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await message.answer('Оформление заказа остановлено')
     await state.finish()
 
-async def request_extra_volume(message: types.Message, state: FSMContext):
-    result = await state.get_data()
-    if 'volume_product2' in result:
-        if int(message.text) % 64 == 0 and int(message.text) > 512:
-            await state.update_data(extra_volume_product=message.text)
-            await message.answer(text=MessageBox.MORE_ANSWER,
-                                 parse_mode='html')
-            await FSM_client.client_location.set()
-        else:
-            await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
+async def request_extra_volume_bush(message: types.Message, state: FSMContext):
+    if int(message.text) % 64 == 0 and int(message.text) > 512:
+        await state.update_data(volume_bush=message.text)
+        await message.answer(text=MessageBox.MORE_ANSWER,
+                             parse_mode='html')
+        await FSM_client.client_location.set()
     else:
-        if int(message.text) > 9:
-            await state.update_data(extra_volume_product=message.text)
-            await message.answer(text=MessageBox.MORE_ANSWER,
-                                 parse_mode='html')
-            await FSM_client.client_location.set()
-        else:
-            await message.answer('Извините, объем клубники должен быть больше 9кг')
-
+        await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
+async def request_extra_volume_berry(message: types.Message, state: FSMContext):
+    if int(message.text) > 9:
+        await state.update_data(volume_berry=message.text)
+        await message.answer(text=MessageBox.MORE_ANSWER,
+                             parse_mode='html')
+        await FSM_client.client_location.set()
+    else:
+        await message.answer('Извините, объем клубники должен быть больше 9кг')
 async def request_location(message: types.Message, state: FSMContext):
     if 'ул' in message.text or 'д.' in message.text or 'кв.' in message.text:
         await state.update_data(client_location=message.text)
@@ -123,9 +117,13 @@ async def request_phone(message: types.Message, state: FSMContext):
                                    f'@{user_name}\n'
                                    f'<b>ЗАКАЗ</b>:\n{result}',
                                parse_mode='html')
-        # BotDB.record_client_data(result['client_phone'], result['client_location'])
-        # BotDB.record_order(message.from_user.id,result['start_order'], result['sub_type_product'], result['volume_product'])
-
+        BotDB.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
+        if 'volume_bush' in result:
+            BotDB.record_order(message.from_user.id, result['type_product'], result['sub_type_product'],
+                               result['volume_bush'], time.asctime())
+        else:
+            BotDB.record_order(message.from_user.id, result['type_product'], None,
+                               result['volume_berry'], time.asctime())
         await state.finish()
     else:
         await message.answer('Не могу разобрать ваш номер телефона, сверьтесь с примером и попробуйте ещё раз')
@@ -138,6 +136,7 @@ async def unknown_handler(message: types.Message):
         await message.answer('Ничего страшного мы скоро с вами свяжемся')
 
 def register_handlers_client(dp: Dispatcher):
+    #Объявление функций обработки команд
     dp.register_message_handler(command_start, commands=['start'])
     dp.register_message_handler(command_admin_id, commands=['admin_id'])
     dp.register_message_handler(command_help, commands=['help'])
@@ -145,8 +144,10 @@ def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'))
     # TODO: Добавить функцию с инлайн клавиатурой и сылками на нужные контакты
     dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Заказать'), state=None)
+    #Объявление функций обработки команд с машиной состояний
     dp.register_message_handler(cancel_handler, lambda message: message.text.startswith('Отмена'), state='*')
-    dp.register_message_handler(request_extra_volume, state=FSM_client.extra_volume_product)
+    dp.register_message_handler(request_extra_volume_berry, state=FSM_client.volume_berry)
+    dp.register_message_handler(request_extra_volume_bush, state=FSM_client.volume_bush)
     dp.register_message_handler(request_location, state=FSM_client.client_location)
     dp.register_message_handler(request_phone, state=FSM_client.client_phone)
     dp.register_message_handler(unknown_handler)
