@@ -5,7 +5,6 @@ import MessageBox
 from Keyboards import InlineKB
 from handlers.client import FSM_client
 
-
 async def callback_make_order(callback: types.CallbackQuery, state: FSMContext):
     cb = callback.data
     await state.update_data(type_product=cb)
@@ -17,6 +16,8 @@ async def callback_make_order(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.reply(text='Какой сорт вас интересует?',
                                      reply_markup=InlineKB.ikb_type_seed)
         await FSM_client.sub_type_product.set()
+    else:
+        await callback.answer('Вы уже выбрали продукт.', show_alert=True)
 
 
 async def callback_kg_value(callback: types.CallbackQuery, state: FSMContext):
@@ -36,7 +37,6 @@ async def callback_kg_value(callback: types.CallbackQuery, state: FSMContext):
             await callback.message.reply(text=MessageBox.KG9_ANSWER,
                                          parse_mode='html')
         await FSM_client.client_location.set()
-
 
 
 

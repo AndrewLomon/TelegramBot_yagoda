@@ -86,6 +86,8 @@ async def request_extra_volume_bush(message: types.Message, state: FSMContext):
         await FSM_client.client_location.set()
     else:
         await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
+
+
 async def request_extra_volume_berry(message: types.Message, state: FSMContext):
     if int(message.text) > 9:
         await state.update_data(volume_berry=message.text)
@@ -143,7 +145,7 @@ def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(command_info, commands=['info'])
     dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'))
     # TODO: Добавить функцию с инлайн клавиатурой и сылками на нужные контакты
-    dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Заказать'), state=None)
+    dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Сделать'), state=None)
     #Объявление функций обработки команд с машиной состояний
     dp.register_message_handler(cancel_handler, lambda message: message.text.startswith('Отмена'), state='*')
     dp.register_message_handler(request_extra_volume_berry, state=FSM_client.volume_berry)
