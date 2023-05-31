@@ -1,5 +1,5 @@
 import sqlite3
-import time
+import datetime
 
 
 class BotDB:
@@ -37,7 +37,26 @@ class BotDB:
         self.cursor.execute("INSERT INTO orders ('user_id', 'product_type', 'product_subtype', 'volume_product', 'date') VALUES (?, ?, ?, ?, ?)",
                             (user_id, product_type, product_subtype, volume_product, date))
         return self.conn.commit()
+
+    def get_client_month_info(self):
+
+        # Calculate the date range for the last month
+        today = datetime.date.today()
+        last_month_end = today.replace(day=1) - datetime.timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        # Execute the SQL query to retrieve data for the last month
+        query = "SELECT * FROM clients WHERE join_date BETWEEN ? AND ?"
+        self.cursor.execute(query, (last_month_start, last_month_end))
+
+        # Fetch all the rows and return the data
+        data = self.cursor.fetchall()
+
+        # Close the database connection
+        # self.conn.close()
+        return data
+
+
     def close(self):
         """Закрытие соединения с БД"""
         self.conn.close()
-

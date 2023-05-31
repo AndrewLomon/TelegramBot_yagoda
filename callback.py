@@ -12,10 +12,12 @@ async def callback_make_order(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.reply(text='Сколько килограм вы хотите заказать?',
                                      reply_markup=InlineKB.ikb_Straw)
         await FSM_client.volume_berry.set()
+        await callback.message.delete()
     elif cb == 'Рассада':
         await callback.message.reply(text='Какой сорт вас интересует?',
                                      reply_markup=InlineKB.ikb_type_seed)
         await FSM_client.sub_type_product.set()
+        await callback.message.delete()
     else:
         await callback.answer('Вы уже выбрали продукт.', show_alert=True)
 
@@ -24,7 +26,7 @@ async def callback_kg_value(callback: types.CallbackQuery, state: FSMContext):
     cb = callback.data
     if cb == 'value_more':
         await callback.message.reply(text=MessageBox.KG_MORE_ANSWER)
-        # await FSM_client.volume_product.set()
+        await callback.message.delete()
     else:
         await state.update_data(volume_berry=cb)
         if cb == '3кг':
@@ -37,6 +39,7 @@ async def callback_kg_value(callback: types.CallbackQuery, state: FSMContext):
             await callback.message.reply(text=MessageBox.KG9_ANSWER,
                                          parse_mode='html')
         await FSM_client.client_location.set()
+        await callback.message.delete()
 
 
 
@@ -47,6 +50,7 @@ async def callback_seed_type(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.reply(text='Какое количество кустов рассады вас интересует?',
                                      reply_markup=InlineKB.ikb_volume_seed)
         await FSM_client.volume_bush.set()
+        await callback.message.delete()
     else:
         await callback.answer('Что-то не так с заказом типа рассады', show_alert=True)
 
@@ -55,7 +59,7 @@ async def callback_bush_value(callback: types.CallbackQuery, state: FSMContext):
     cb = callback.data
     if cb == 'Seed_volume_more':
         await callback.message.reply(text=MessageBox.MORE_SEED_ANSWER)
-        # await FSM_client.volume_product.set()
+        await callback.message.delete()
     else:
         await state.update_data(volume_bush=cb)
         if callback.data == '128_кустов':
@@ -68,6 +72,7 @@ async def callback_bush_value(callback: types.CallbackQuery, state: FSMContext):
             await callback.message.reply(text=MessageBox.BUSH_512_ANSWER,
                                          parse_mode='html')
         await FSM_client.client_location.set()
+        await callback.message.delete()
 
 def register_handlers_callback(dp: Dispatcher):
     # TODO: Добавить для этих функций блок на повторное нажатия

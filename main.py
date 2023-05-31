@@ -1,14 +1,18 @@
-# This is a new Telegram Bot  - Education version
+# This is Telegram Bot for Srawberry shop
 from aiogram import executor
 import callback
 from create_bot import dp
-from handlers import client
+from handlers import client, admin
+from db import BotDB
 
 
 async def on_startup(_):
     print('Okay, lets go!')
 
 
+
+#Выполнение зарегистрированных функций
+admin.register_handlers_admin(dp)
 client.register_handlers_client(dp)
 callback.register_handlers_callback(dp)
 

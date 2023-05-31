@@ -1,6 +1,5 @@
 import time
 
-
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -11,9 +10,12 @@ from create_bot import bot
 from db import BotDB
 from Config import RECEIVE_ID
 
+# Подключение БД.
+BotDB = BotDB('yagoda.db')
 
 
 class FSM_client(StatesGroup):
+    admin = State()
     type_product = State()
     sub_type_product = State()
     volume_berry = State()
@@ -21,8 +23,6 @@ class FSM_client(StatesGroup):
     client_location = State()
     client_phone = State()
 
-#Подключение БД.
-BotDB = BotDB('yagoda.db')
 
 async def command_start(message: types.Message):
     userID = message.from_user.id
@@ -34,12 +34,6 @@ async def command_start(message: types.Message):
                            text=MessageBox.START_MESSAGE,
                            reply_markup=KeyBoards.kb_main)
     await message.delete()
-
-async def command_admin_id(message: types.Message):
-    RECEIVE_ID = message.from_user.id
-    await message.reply(text=f'Теперь вы получаете заказы, {message.from_user.full_name}')
-    await message.delete()
-    return RECEIVE_ID
 
 async def command_help(message: types.Message):
     await message.reply(text=MessageBox.HELP_MESSAGE)
@@ -84,6 +78,7 @@ async def request_extra_volume_bush(message: types.Message, state: FSMContext):
         await message.answer(text=MessageBox.MORE_ANSWER,
                              parse_mode='html')
         await FSM_client.client_location.set()
+        await message.delete()
     else:
         await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
 
@@ -94,6 +89,7 @@ async def request_extra_volume_berry(message: types.Message, state: FSMContext):
         await message.answer(text=MessageBox.MORE_ANSWER,
                              parse_mode='html')
         await FSM_client.client_location.set()
+        await message.delete()
     else:
         await message.answer('Извините, объем клубники должен быть больше 9кг')
 async def request_location(message: types.Message, state: FSMContext):
@@ -103,6 +99,7 @@ async def request_location(message: types.Message, state: FSMContext):
                              '<b>Пример:</b> 7987*******',
                              parse_mode='html')
         await FSM_client.client_phone.set()
+        await message.delete()
     else:
         await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером и попробуйте ещё раз')
 
@@ -113,12 +110,17 @@ async def request_phone(message: types.Message, state: FSMContext):
         await state.update_data(client_phone=message.text)
         result = await state.get_data()
         await message.answer(text=MessageBox.Respond_request_phone)
-        await bot.send_message(RECEIVE_ID, f'<b>Новый заказ</b>:\n'
+        await message.delete()
+
+        #Рассылка для админов заказов
+        for admin in RECEIVE_ID:
+            await bot.send_message(admin, f'<b>Новый заказ</b>:\n'
                                    f'<b>Время</b>: {time.asctime()}\n'
                                    f'<b>ФИО</b>: {user_full_name}\n'
                                    f'@{user_name}\n'
                                    f'<b>ЗАКАЗ</b>:\n{result}',
-                               parse_mode='html')
+                                   parse_mode='html')
+        #Запись данных в БД
         BotDB.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
         if 'volume_bush' in result:
             BotDB.record_order(message.from_user.id, result['type_product'], result['sub_type_product'],
@@ -140,12 +142,12 @@ async def unknown_handler(message: types.Message):
 def register_handlers_client(dp: Dispatcher):
     #Объявление функций обработки команд
     dp.register_message_handler(command_start, commands=['start'])
-    dp.register_message_handler(command_admin_id, commands=['admin_id'])
     dp.register_message_handler(command_help, commands=['help'])
     dp.register_message_handler(command_info, commands=['info'])
     dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'))
     # TODO: Добавить функцию с инлайн клавиатурой и сылками на нужные контакты
     dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Сделать'), state=None)
+
     #Объявление функций обработки команд с машиной состояний
     dp.register_message_handler(cancel_handler, lambda message: message.text.startswith('Отмена'), state='*')
     dp.register_message_handler(request_extra_volume_berry, state=FSM_client.volume_berry)

@@ -1,2 +1,2 @@
 from handlers import client
-from handlers import others
+from handlers import admin
