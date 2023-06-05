@@ -3,6 +3,7 @@ import time
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InputMediaPhoto, InputFile
 
 import MessageBox
 from Keyboards import KeyBoards, InlineKB
@@ -16,10 +17,7 @@ BotDB = BotDB('yagoda.db')
 
 class FSM_client(StatesGroup):
     admin = State()
-    type_product = State()
-    sub_type_product = State()
     volume_berry = State()
-    volume_bush = State()
     client_location = State()
     client_phone = State()
 
@@ -50,94 +48,110 @@ async def command_discount(message: types.Message):
     await message.reply(text=MessageBox.DISCOUNT_MESSAGE)
     await message.delete()
 
+async def get_menu(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state:
+        await state.finish()
+    photo_url3 = InputFile('photos/3kg.jpg')
+    photo_url6 = InputFile('photos/6kg.jpg')
+    photo_url9 = InputFile('photos/9kg.jpg')
+    await bot.send_photo(message.from_user.id, photo=photo_url3)
+    await bot.send_photo(message.from_user.id, photo=photo_url6)
+    await bot.send_photo(message.from_user.id, photo=photo_url9)
+    await message.answer('Выше представлено наше меню.'
+                         'Чтобы начать оформление заказа нажмите на кнопку в меню\n'
+                         '<b>Сделать заказ</b> 🍓',parse_mode='html')
 
 # Начало диалога заказа продукта
-async def command_makeorder(message: types.Message):
+async def command_makeorder(message: types.Message, state: FSMContext):
     uid = message.from_user.id
     uname = message.from_user.full_name
     try:
-        await FSM_client.type_product.set()
+        current_state = await state.get_state()
+        if current_state:
+            await state.finish()
         await bot.send_message(chat_id=message.from_user.id,
-                               text=f'Что бы вы хотели заказать, {uname}?',
-                               reply_markup=InlineKB.ikb_order)
+                               text=f'Вы можете заказать клубнику, следуя инструкции 😀 \n'
+                                    f'Выберете необходимый объем, {uname}?',
+                               reply_markup=InlineKB.ikb_Straw)
+        await FSM_client.volume_berry.set()
         await message.delete()
-    except Exception:
+    except:
         await bot.send_message(uid, 'Что-то пошло не так с командой сделать заказ')
 
 
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
+        await message.answer(text='Процесс оформления заказа не начат. Чтобы начать оформление заказа нажмите на кнопку в меню\n'
+                             '<b>Сделать заказ</b> 🍓',
+                             parse_mode='html')
         return
     await message.answer('Оформление заказа остановлено')
     await state.finish()
 
-async def request_extra_volume_bush(message: types.Message, state: FSMContext):
-    if int(message.text) % 64 == 0 and int(message.text) > 512:
-        await state.update_data(volume_bush=message.text)
-        await message.answer(text=MessageBox.MORE_ANSWER,
-                             parse_mode='html')
-        await FSM_client.client_location.set()
-        await message.delete()
-    else:
-        await message.answer('Извините, количество кустов рассады должно быть кратно 64 и больше 512')
-
-
 async def request_extra_volume_berry(message: types.Message, state: FSMContext):
-    if int(message.text) > 9:
-        await state.update_data(volume_berry=message.text)
-        await message.answer(text=MessageBox.MORE_ANSWER,
-                             parse_mode='html')
-        await FSM_client.client_location.set()
-        await message.delete()
-    else:
-        await message.answer('Извините, объем клубники должен быть больше 9кг')
+    try:
+        if int(message.text) > 9 or int(message.text) == 3 or int(message.text) == 6:
+            await state.update_data(volume_berry=message.text)
+            await message.answer(text=MessageBox.MORE_ANSWER,
+                                 parse_mode='html')
+            await FSM_client.client_location.set()
+            await message.delete()
+        else:
+            await message.answer('Извините, объем клубники должен быть больше равен 3, 6, 9кг или больше')
+    except:
+        await message.answer('Выберите пожалуйста опцию выше или впишите число')
+
+
 async def request_location(message: types.Message, state: FSMContext):
-    if 'ул' in message.text or 'д.' in message.text or 'кв.' in message.text:
-        await state.update_data(client_location=message.text)
-        await message.answer('Введите пожалуйста ваш номер телефона\n'
-                             '<b>Пример:</b> 7987*******',
-                             parse_mode='html')
-        await FSM_client.client_phone.set()
-        await message.delete()
-    else:
-        await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером и попробуйте ещё раз')
+    try:
+        if 'ул' in message.text or 'д.' in message.text or 'кв.' in message.text:
+            await state.update_data(client_location=message.text)
+            await message.answer('Введите пожалуйста ваш номер телефона\n'
+                                 '<b>Пример:</b> 7987*******',
+                                 parse_mode='html')
+            await FSM_client.client_phone.set()
+            await message.delete()
+        else:
+            await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером и попробуйте ещё раз')
+    except:
+        await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
 
 async def request_phone(message: types.Message, state: FSMContext):
-    if message.text.startswith('7') and len(message.text) == 11:
-        user_name = message.from_user.username
-        user_full_name = message.from_user.full_name
-        await state.update_data(client_phone=message.text)
-        result = await state.get_data()
-        await message.answer(text=MessageBox.Respond_request_phone)
-        await message.delete()
+    try:
+        if message.text.startswith('7') and len(message.text) == 11:
+            user_name = message.from_user.username
+            user_full_name = message.from_user.full_name
+            await state.update_data(client_phone=message.text)
+            result = await state.get_data()
+            await message.answer(text=MessageBox.Respond_request_phone)
+            await message.delete()
 
-        #Рассылка для админов заказов
-        for admin in RECEIVE_ID:
-            await bot.send_message(admin, f'<b>Новый заказ</b>:\n'
-                                   f'<b>Время</b>: {time.asctime()}\n'
-                                   f'<b>ФИО</b>: {user_full_name}\n'
-                                   f'@{user_name}\n'
-                                   f'<b>ЗАКАЗ</b>:\n{result}',
-                                   parse_mode='html')
-        #Запись данных в БД
-        BotDB.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
-        if 'volume_bush' in result:
-            BotDB.record_order(message.from_user.id, result['type_product'], result['sub_type_product'],
-                               result['volume_bush'], time.asctime())
+            # Рассылка для админов заказов
+            for admin in RECEIVE_ID:
+                await bot.send_message(admin, f'<b>Новый заказ</b>:\n'
+                                              f'<b>Время</b>: {time.asctime()}\n'
+                                              f'<b>ФИО</b>: {user_full_name}\n'
+                                              f'@{user_name}\n'
+                                              f'<b>ЗАКАЗ</b>:\n{result}',
+                                       parse_mode='html')
+            # Запись данных в БД
+            BotDB.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
+            BotDB.record_order(message.from_user.id, result['volume_berry'], time.asctime())
+            await state.finish()
         else:
-            BotDB.record_order(message.from_user.id, result['type_product'], None,
-                               result['volume_berry'], time.asctime())
-        await state.finish()
-    else:
-        await message.answer('Не могу разобрать ваш номер телефона, сверьтесь с примером и попробуйте ещё раз')
-
-async def unknown_handler(message: types.Message):
-    user_id = message.from_user.id
-    if user_id == message.from_user.id:
+            await message.answer('Не могу разобрать ваш номер телефона, сверьтесь с примером и попробуйте ещё раз')
+    except:
         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
-    else:
-        await message.answer('Ничего страшного мы скоро с вами свяжемся')
+
+# async def unknown_handler(message: types.Message):
+#     user_id = message.from_user.id
+#     if user_id == message.from_user.id:
+#         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
+#     else:
+#         await message.answer('Ничего страшного мы скоро с вами свяжемся')
+#         await bot.send_message(RECEIVE_ID, f'Пожалуйста свяжитесь с @{message.from_user.username}')
 
 def register_handlers_client(dp: Dispatcher):
     #Объявление функций обработки команд
@@ -146,13 +160,13 @@ def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(command_info, commands=['info'])
     dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'))
     # TODO: Добавить функцию с инлайн клавиатурой и сылками на нужные контакты
-    dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Сделать'), state=None)
+    dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Сделать'), state='*')
 
     #Объявление функций обработки команд с машиной состояний
     dp.register_message_handler(cancel_handler, lambda message: message.text.startswith('Отмена'), state='*')
+    dp.register_message_handler(get_menu, lambda message: message.text.startswith('Меню'), state='*')
     dp.register_message_handler(request_extra_volume_berry, state=FSM_client.volume_berry)
-    dp.register_message_handler(request_extra_volume_bush, state=FSM_client.volume_bush)
     dp.register_message_handler(request_location, state=FSM_client.client_location)
     dp.register_message_handler(request_phone, state=FSM_client.client_phone)
-    dp.register_message_handler(unknown_handler)
+    # dp.register_message_handler(unknown_handler)
 

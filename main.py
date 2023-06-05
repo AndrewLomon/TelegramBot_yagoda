@@ -3,7 +3,6 @@ from aiogram import executor
 import callback
 from create_bot import dp
 from handlers import client, admin
-from db import BotDB
 
 
 async def on_startup(_):
@@ -13,8 +12,9 @@ async def on_startup(_):
 
 #Выполнение зарегистрированных функций
 admin.register_handlers_admin(dp)
-client.register_handlers_client(dp)
 callback.register_handlers_callback(dp)
+client.register_handlers_client(dp)
+
 
 
 

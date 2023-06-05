@@ -13,4 +13,4 @@ class IsOwnerFilter(BoundFilter):
         self.is_owner = is_owner
 
     async def check(self, message: types.Message):
-        return message.from_user.id in Config.RECEIVE_ID
+        return message.from_user.id in Config.BOT_OWNERS

@@ -1,4 +1,16 @@
 # Here are important information about telegram bot
-TOKEN = "6077237274:AAGTOcLo4O2O1J03dYnSPLZ0qN3c9UI8tEk"
+from dotenv import load_dotenv
+import os
+
+# Find .env file with os variables
+load_dotenv("dev.env")
+
+# retrieve config variables
+try:
+    BOT_TOKEN = os.getenv('TOKEN')
+    BOT_OWNERS = [int(x) for x in os.getenv('BOT_OWNERS').split(",")]
+except (TypeError, ValueError) as ex:
+    print("Error while reading config:", ex)
+
 global RECEIVE_ID
-RECEIVE_ID = [326374284]
+RECEIVE_ID = []

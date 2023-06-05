@@ -2,11 +2,12 @@ import sqlite3
 import datetime
 
 
+
 class BotDB:
     def __init__(self, db_file):
         """Инициализация соединения с БД"""
-        print('Базза данных подключилась!')
         self.conn = sqlite3.connect((db_file))
+        print('Базза данных подключилась!')
         self.cursor = self.conn.cursor()
 
     def user_exists(self, user_id):
@@ -32,22 +33,26 @@ class BotDB:
                             (phone_number, adress, user_id))
         return self.conn.commit()
 
-    def record_order(self, user_id, product_type, product_subtype, volume_product, date):
+    def record_order(self, user_id, volume_product, date):
         """Добавляем данные по заказу"""
-        self.cursor.execute("INSERT INTO orders ('user_id', 'product_type', 'product_subtype', 'volume_product', 'date') VALUES (?, ?, ?, ?, ?)",
-                            (user_id, product_type, product_subtype, volume_product, date))
+        self.cursor.execute("INSERT INTO orders ('user_id', 'volume_product', 'date') VALUES (?, ?, ?)",
+                            (user_id, volume_product, date))
         return self.conn.commit()
 
-    def get_client_month_info(self):
+    def get_client_info(self):
+        query = "SELECT * FROM clients"
+        self.cursor.execute(query)
 
-        # Calculate the date range for the last month
-        today = datetime.date.today()
-        last_month_end = today.replace(day=1) - datetime.timedelta(days=1)
-        last_month_start = last_month_end.replace(day=1)
+        # Fetch all the rows and return the data
+        data = self.cursor.fetchall()
 
-        # Execute the SQL query to retrieve data for the last month
-        query = "SELECT * FROM clients WHERE join_date BETWEEN ? AND ?"
-        self.cursor.execute(query, (last_month_start, last_month_end))
+        # Close the database connection
+        # self.conn.close()
+        return data
+
+    def get_client_orders(self, user_id):
+        query = "SELECT volume_product, date FROM orders WHERE user_id=?"
+        self.cursor.execute(query, (user_id,))
 
         # Fetch all the rows and return the data
         data = self.cursor.fetchall()

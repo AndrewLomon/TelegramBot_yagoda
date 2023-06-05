@@ -2,10 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButt
 
 #Общая клавиатура в чате
 kb_main = ReplyKeyboardMarkup(one_time_keyboard=True, row_width=2, resize_keyboard=True)
-kb1 = KeyboardButton('Сделать заказ')
-kb2 = KeyboardButton('Скидки')
-kb3 = KeyboardButton('Отмена заказа')
-kb_main.add(kb1).row(kb2, kb3)
+kb_main.add('Сделать заказ 🍓').add('Отмена заказа ⭕️').row('Меню', 'Скидки')
 
 #Админская клавиатура в чате
 kb_admin = ReplyKeyboardMarkup(one_time_keyboard=True, row_width=2, resize_keyboard=True)
