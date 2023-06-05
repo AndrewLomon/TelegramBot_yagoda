@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 # Find .env file with os variables
-load_dotenv("dev.env")
+load_dotenv('.env')
 
 # retrieve config variables
 try:
@@ -11,6 +11,3 @@ try:
     BOT_OWNERS = [int(x) for x in os.getenv('BOT_OWNERS').split(",")]
 except (TypeError, ValueError) as ex:
     print("Error while reading config:", ex)
-
-global RECEIVE_ID
-RECEIVE_ID = []

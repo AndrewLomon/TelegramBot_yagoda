@@ -1,5 +1,4 @@
 import sqlite3
-import datetime
 
 
 
@@ -42,25 +41,38 @@ class BotDB:
     def get_client_info(self):
         query = "SELECT * FROM clients"
         self.cursor.execute(query)
-
-        # Fetch all the rows and return the data
         data = self.cursor.fetchall()
-
-        # Close the database connection
-        # self.conn.close()
         return data
 
     def get_client_orders(self, user_id):
         query = "SELECT volume_product, date FROM orders WHERE user_id=?"
         self.cursor.execute(query, (user_id,))
-
-        # Fetch all the rows and return the data
         data = self.cursor.fetchall()
-
-        # Close the database connection
-        # self.conn.close()
         return data
 
+    def admin_exists(self, user_id):
+        """Проверяем, есть ли админ в БД"""
+        result = self.cursor.execute("SELECT id FROM admins WHERE admin_id=?", (user_id,))
+        return bool(len(result.fetchall()))
+
+    def add_admin(self, user_id, admin_name, date):
+        """Добавляем админа в БД"""
+        self.cursor.execute("INSERT INTO admins ('admin_id', 'admin_name', 'date') VALUES (?, ?, ?)",
+                            (user_id, admin_name, date))
+        return self.conn.commit()
+
+    def delete_admin(self, user_id,):
+        """Удаляем админа из БД"""
+        self.cursor.execute("DELETE FROM admins WHERE admin_id=?",
+                            (user_id,))
+        return self.conn.commit()
+
+    def get_admin_id(self):
+        """Берём айди всех админов"""
+        query = "SELECT admin_id FROM admins"
+        self.cursor.execute(query)
+        data = self.cursor.fetchall()
+        return data
 
     def close(self):
         """Закрытие соединения с БД"""

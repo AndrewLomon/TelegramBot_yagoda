@@ -3,20 +3,14 @@ import time
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import InputMediaPhoto, InputFile
+from aiogram.types import InputFile
 
 import MessageBox
 from Keyboards import KeyBoards, InlineKB
-from create_bot import bot
-from db import BotDB
-from Config import RECEIVE_ID
-
-# Подключение БД.
-BotDB = BotDB('yagoda.db')
+from create_bot import bot, db
 
 
 class FSM_client(StatesGroup):
-    admin = State()
     volume_berry = State()
     client_location = State()
     client_phone = State()
@@ -26,8 +20,8 @@ async def command_start(message: types.Message):
     userID = message.from_user.id
     name = message.from_user.full_name
     nick_name = message.from_user.username
-    if not BotDB.user_exists(userID):
-        BotDB.add_client(userID, time.asctime(), name, nick_name)
+    if not db.user_exists(userID):
+        db.add_client(userID, time.asctime(), name, nick_name)
     await bot.send_message(chat_id=message.from_user.id,
                            text=MessageBox.START_MESSAGE,
                            reply_markup=KeyBoards.kb_main)
@@ -58,7 +52,7 @@ async def get_menu(message: types.Message, state: FSMContext):
     await bot.send_photo(message.from_user.id, photo=photo_url3)
     await bot.send_photo(message.from_user.id, photo=photo_url6)
     await bot.send_photo(message.from_user.id, photo=photo_url9)
-    await message.answer('Выше представлено наше меню.'
+    await message.answer('Выше представлено наше меню.\n'
                          'Чтобы начать оформление заказа нажмите на кнопку в меню\n'
                          '<b>Сделать заказ</b> 🍓',parse_mode='html')
 
@@ -127,31 +121,24 @@ async def request_phone(message: types.Message, state: FSMContext):
             result = await state.get_data()
             await message.answer(text=MessageBox.Respond_request_phone)
             await message.delete()
-
+            admins = db.get_admin_id()
             # Рассылка для админов заказов
-            for admin in RECEIVE_ID:
-                await bot.send_message(admin, f'<b>Новый заказ</b>:\n'
-                                              f'<b>Время</b>: {time.asctime()}\n'
-                                              f'<b>ФИО</b>: {user_full_name}\n'
-                                              f'@{user_name}\n'
-                                              f'<b>ЗАКАЗ</b>:\n{result}',
+            for admin_n in admins:
+                await bot.send_message(admin_n[0], f'<b>Новый заказ</b>:\n'
+                                                   f'<b>Время</b>: {time.asctime()}\n'
+                                                   f'<b>ФИО</b>: {user_full_name}\n'
+                                                   f'@{user_name}\n'
+                                                   f'<b>ЗАКАЗ</b>:\n{result}',
                                        parse_mode='html')
             # Запись данных в БД
-            BotDB.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
-            BotDB.record_order(message.from_user.id, result['volume_berry'], time.asctime())
+            db.record_client_data(result['client_phone'], result['client_location'], message.from_user.id)
+            db.record_order(message.from_user.id, result['volume_berry'], time.asctime())
             await state.finish()
         else:
             await message.answer('Не могу разобрать ваш номер телефона, сверьтесь с примером и попробуйте ещё раз')
     except:
         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
 
-# async def unknown_handler(message: types.Message):
-#     user_id = message.from_user.id
-#     if user_id == message.from_user.id:
-#         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
-#     else:
-#         await message.answer('Ничего страшного мы скоро с вами свяжемся')
-#         await bot.send_message(RECEIVE_ID, f'Пожалуйста свяжитесь с @{message.from_user.username}')
 
 def register_handlers_client(dp: Dispatcher):
     #Объявление функций обработки команд

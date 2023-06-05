@@ -1,5 +1,7 @@
+.env
+Config.py
 .venv/
 __pycache__/
 .idea/
-Config.py
-.env
+
+
