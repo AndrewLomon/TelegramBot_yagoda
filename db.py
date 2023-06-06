@@ -74,6 +74,19 @@ class BotDB:
         data = self.cursor.fetchall()
         return data
 
+    def add_menu(self, photo, name, description):
+        """Удаляем старые данные в меню и загружаем новые"""
+        self.cursor.execute("INSERT INTO menu ('photo', 'name', 'description') VALUES (?, ?, ?)",
+                            (photo, name, description))
+        return self.conn.commit()
+
+    def get_menu(self):
+        """Удаляем старые данные в меню и загружаем новые"""
+        query = "SELECT * FROM menu"
+        self.cursor.execute(query)
+        data = self.cursor.fetchall()
+        return data
+
     def close(self):
         """Закрытие соединения с БД"""
         self.conn.close()

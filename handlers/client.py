@@ -3,7 +3,6 @@ import time
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import InputFile
 
 import MessageBox
 from Keyboards import KeyBoards, InlineKB
@@ -46,11 +45,12 @@ async def get_menu(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state:
         await state.finish()
-    photo_url3 = InputFile('photos/Strawberry.jpg')
-    await bot.send_photo(message.from_user.id, photo=photo_url3)
-    await message.answer('Выше представлено наше меню.\n'
-                         'Чтобы начать оформление заказа нажмите на кнопку в меню\n'
-                         '<b>Сделать заказ</b> 🍓',parse_mode='html')
+    menu = db.get_menu()
+    if bool(len(menu)):
+        for col in menu:
+            await bot.send_photo(message.from_user.id, col[1], f'\n{col[3]}')
+    else:
+        await message.answer('На данный момент не подгруженого меню')
     await message.delete()
 
 # Начало диалога заказа продукта

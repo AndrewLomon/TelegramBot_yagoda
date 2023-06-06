@@ -9,6 +9,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 class FSM_admin(StatesGroup):
     admin = State()
     photo = State()
+    phName = State()
     phDescription = State()
 
 async def manage_admin(message: types.Message):
@@ -58,7 +59,32 @@ async def get_client_data_admin(message: types.Message):
     else:
         await message.answer('Вы не в списке администраторов')
 
+async def cmd_updateMenu(message: types.Message):
+    await FSM_admin.photo.set()
+    await message.reply('Скидывай сюда нужную тебе фотографию')
 
+async def upload_photo(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['photo'] = message.photo[0].file_id
+    await FSM_admin.next()
+    await message.reply('Введи название фото')
+
+async def upload_phName(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['phName'] = message.text
+    await FSM_admin.next()
+    await message.reply('Введи сообщение, которое будет отправляться под фотографией')
+
+async def upload_phDescription(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['phDescription'] = message.text
+    result = await state.get_data()
+    db.add_menu(result['photo'], result['phName'], result['phDescription'])
+    await state.finish()
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Всё готово',
+                           reply_markup=KeyBoards.kb_admin)
+    await FSM_admin.admin.set()
 
 async def manage_admin_close(message: types.Message, state: FSMContext):
     await bot.send_message(chat_id=message.from_user.id,
@@ -71,4 +97,8 @@ def register_handlers_admin(dp: Dispatcher):
     dp.register_message_handler(add_admin, lambda message: message.text.startswith('Добавить'), state=FSM_admin.admin)
     dp.register_message_handler(delete_admin, lambda message: message.text.startswith('Удалить'), state=FSM_admin.admin)
     dp.register_message_handler(get_client_data_admin, lambda message: message.text.startswith('Выгрузить'), state=FSM_admin.admin)
+    dp.register_message_handler(cmd_updateMenu, lambda message: message.text.startswith('Обновить'), state=FSM_admin.admin)
+    dp.register_message_handler(upload_photo, content_types=['photo'], state=FSM_admin.photo)
+    dp.register_message_handler(upload_phName, state=FSM_admin.phName)
+    dp.register_message_handler(upload_phDescription, state=FSM_admin.phDescription)
     dp.register_message_handler(manage_admin_close, lambda message: message.text.startswith('Закрыть'), state='*')
