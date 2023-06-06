@@ -39,22 +39,19 @@ async def command_info(message: types.Message):
 
 
 async def command_discount(message: types.Message):
-    await message.reply(text=MessageBox.DISCOUNT_MESSAGE)
+    await message.reply(text=MessageBox.DISCOUNT_MESSAGE, parse_mode='html')
     await message.delete()
 
 async def get_menu(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state:
         await state.finish()
-    photo_url3 = InputFile('photos/3kg.jpg')
-    photo_url6 = InputFile('photos/6kg.jpg')
-    photo_url9 = InputFile('photos/9kg.jpg')
+    photo_url3 = InputFile('photos/Strawberry.jpg')
     await bot.send_photo(message.from_user.id, photo=photo_url3)
-    await bot.send_photo(message.from_user.id, photo=photo_url6)
-    await bot.send_photo(message.from_user.id, photo=photo_url9)
     await message.answer('Выше представлено наше меню.\n'
                          'Чтобы начать оформление заказа нажмите на кнопку в меню\n'
                          '<b>Сделать заказ</b> 🍓',parse_mode='html')
+    await message.delete()
 
 # Начало диалога заказа продукта
 async def command_makeorder(message: types.Message, state: FSMContext):

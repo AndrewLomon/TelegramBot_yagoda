@@ -14,7 +14,7 @@ class BotDB:
         result = self.cursor.execute("SELECT id FROM clients WHERE user_id=?", (user_id,))
         return bool(len(result.fetchall()))
 
-    def get_client_id(self, user_id):
+    def get_client_ID(self, user_id):
         """Получаем id юзера в базе по его user_id в телеграмме"""
         result = self.cursor.execute("SELECT id FROM clients WHERE user_id=?", (user_id,))
         return result.fetchone()[0]

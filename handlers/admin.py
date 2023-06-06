@@ -8,6 +8,8 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 class FSM_admin(StatesGroup):
     admin = State()
+    photo = State()
+    phDescription = State()
 
 async def manage_admin(message: types.Message):
     await FSM_admin.admin.set()
@@ -39,16 +41,16 @@ async def delete_admin(message: types.Message):
 
 async def get_client_data_admin(message: types.Message):
     if db.admin_exists(message.from_user.id):
-        for row in db.get_client_info():
+        for col in db.get_client_info():
             count = 0
             await bot.send_message(message.from_user.id, '_________________\n')
-            await bot.send_message(message.from_user.id, text=f'ID {row[1]}\n'
-                                                              f'Время авторизации {row[2]}\n'
-                                                              f'Имя {row[3]}\n'
-                                                              f'Телефон {row[4]}\n'
-                                                              f'Ник @{row[5]}\n'
-                                                              f'Адрес: {row[6]}')
-            for rowOrder in db.get_client_orders(row[1]):
+            await bot.send_message(message.from_user.id, text=f'ID {col[1]}\n'
+                                                              f'Время авторизации {col[2]}\n'
+                                                              f'Имя {col[3]}\n'
+                                                              f'Телефон {col[4]}\n'
+                                                              f'Ник @{col[5]}\n'
+                                                              f'Адрес: {col[6]}')
+            for rowOrder in db.get_client_orders(col[1]):
                 count += 1
                 await bot.send_message(message.from_user.id, text=f'Заказ №{count}\n'
                                                                   f'Объем клубники: {rowOrder[0]}\n'
