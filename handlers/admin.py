@@ -5,19 +5,21 @@ from create_bot import bot, db
 import MessageBox
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 class FSM_admin(StatesGroup):
     admin = State()
+    dbase = State()
     photo = State()
     phName = State()
     phDescription = State()
 
+"""Функции главного окна админки"""
 async def manage_admin(message: types.Message):
     await FSM_admin.admin.set()
     await bot.send_message(chat_id=message.from_user.id,
                            text=MessageBox.ADMIN_MESSAGE,
                            reply_markup=KeyBoards.kb_admin)
-
 async def add_admin(message: types.Message):
     try:
         if not db.admin_exists(message.from_user.id):
@@ -28,7 +30,6 @@ async def add_admin(message: types.Message):
             await message.answer(f'Вы уже в списке администраторов, {message.from_user.full_name}')
     except:
         await message.answer('Не удалось обновить получателя заказов')
-
 async def delete_admin(message: types.Message):
     try:
         if not db.admin_exists(message.from_user.id):
@@ -39,7 +40,60 @@ async def delete_admin(message: types.Message):
             await message.delete()
     except:
         await message.answer('Не удалось удалить админку')
+async def dbase_menu_open(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Что будем делать с БД?',
+                           reply_markup=KeyBoards.kb_db)
+    await FSM_admin.dbase.set()
+async def manage_admin_close(message: types.Message, state: FSMContext):
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Welcome back',
+                           reply_markup=KeyBoards.kb_main)
+    await state.finish()
 
+#Дальше команды для управления БД
+"""Загрузка опций в меню"""
+async def cmd_updateMenu(message: types.Message):
+    await FSM_admin.photo.set()
+    await message.reply('Скидывай сюда нужную тебе фотографию')
+async def upload_photo(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['photo'] = message.photo[0].file_id
+    await FSM_admin.next()
+    await message.reply('Введи название фото')
+async def upload_phName(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['phName'] = message.text
+    await FSM_admin.next()
+    await message.reply('Введи сообщение, которое будет отправляться под фотографией')
+async def upload_phDescription(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['phDescription'] = message.text
+    result = await state.get_data()
+    db.add_menu(result['photo'], result['phName'], result['phDescription'])
+    await state.finish()
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Всё готово',
+                           reply_markup=KeyBoards.kb_db)
+    await FSM_admin.dbase.set()
+
+"""Удаление опций из меню"""
+async def cmd_delete_menu(message: types.Message):
+    menu = db.get_menu()
+    if bool(len(menu)):
+        for col in menu:
+            await bot.send_photo(message.from_user.id, col[1], f'\n{col[3]}')
+            await bot.send_message(message.from_user.id, text='☝️', reply_markup=InlineKeyboardMarkup().\
+                                   add(InlineKeyboardButton('Удалить', callback_data=f'del {col[2]}')))
+    else:
+        await message.answer('На данный момент нет подгруженого меню')
+    await message.delete()
+async def run_delete_menu(callback: types.CallbackQuery):
+    cb = callback.data.replace('del ', '')
+    db.delete_menu(cb)
+    await callback.answer(f'{cb} успешно удалено', show_alert=True)
+
+"""Выгрузка клиентов с заказами и выход из БД"""
 async def get_client_data_admin(message: types.Message):
     if db.admin_exists(message.from_user.id):
         for col in db.get_client_info():
@@ -58,47 +112,39 @@ async def get_client_data_admin(message: types.Message):
                                                                   f'Дата заказа: {rowOrder[1]}')
     else:
         await message.answer('Вы не в списке администраторов')
-
-async def cmd_updateMenu(message: types.Message):
-    await FSM_admin.photo.set()
-    await message.reply('Скидывай сюда нужную тебе фотографию')
-
-async def upload_photo(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['photo'] = message.photo[0].file_id
-    await FSM_admin.next()
-    await message.reply('Введи название фото')
-
-async def upload_phName(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['phName'] = message.text
-    await FSM_admin.next()
-    await message.reply('Введи сообщение, которое будет отправляться под фотографией')
-
-async def upload_phDescription(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['phDescription'] = message.text
-    result = await state.get_data()
-    db.add_menu(result['photo'], result['phName'], result['phDescription'])
+async def dbase_menu_close(message: types.Message, state: FSMContext):
     await state.finish()
     await bot.send_message(chat_id=message.from_user.id,
-                           text='Всё готово',
+                           text='С возвращением в админку',
                            reply_markup=KeyBoards.kb_admin)
     await FSM_admin.admin.set()
 
-async def manage_admin_close(message: types.Message, state: FSMContext):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text='Welcome back',
-                           reply_markup=KeyBoards.kb_main)
-    await state.finish()
+
 
 def register_handlers_admin(dp: Dispatcher):
+    # Функции главного окна админки
     dp.register_message_handler(manage_admin, is_owner=True, commands=['admin'], commands_prefix="!/")
+    dp.register_message_handler(manage_admin_close, lambda message: message.text.startswith('Закрыть'), state='*')
     dp.register_message_handler(add_admin, lambda message: message.text.startswith('Добавить'), state=FSM_admin.admin)
     dp.register_message_handler(delete_admin, lambda message: message.text.startswith('Удалить'), state=FSM_admin.admin)
-    dp.register_message_handler(get_client_data_admin, lambda message: message.text.startswith('Выгрузить'), state=FSM_admin.admin)
-    dp.register_message_handler(cmd_updateMenu, lambda message: message.text.startswith('Обновить'), state=FSM_admin.admin)
+    dp.register_message_handler(dbase_menu_open, lambda message: message.text.startswith('БД'),
+                                state=FSM_admin.admin)
+
+    # Загрузка в меню
+    dp.register_message_handler(cmd_updateMenu, lambda message: message.text.startswith('Обновить'), state=FSM_admin.dbase)
     dp.register_message_handler(upload_photo, content_types=['photo'], state=FSM_admin.photo)
     dp.register_message_handler(upload_phName, state=FSM_admin.phName)
     dp.register_message_handler(upload_phDescription, state=FSM_admin.phDescription)
-    dp.register_message_handler(manage_admin_close, lambda message: message.text.startswith('Закрыть'), state='*')
+
+    # Удаление опций из меню
+    dp.register_message_handler(cmd_delete_menu, lambda message: message.text.startswith('Удалить опции'),
+                                state=FSM_admin.dbase)
+    dp.register_callback_query_handler(run_delete_menu, lambda x: x.data and x.data.startswith('del '),
+                                       state=FSM_admin.dbase)
+
+    # Выгрузка клиентов с заказами и выход из БД
+    dp.register_message_handler(get_client_data_admin, lambda message: message.text.startswith('Выгрузить'),
+                                state=FSM_admin.dbase)
+    dp.register_message_handler(dbase_menu_close, lambda message: message.text.startswith('Вернуться'),
+                                state=FSM_admin.dbase)
+
