@@ -37,7 +37,10 @@ async def command_info(message: types.Message):
     await message.delete()
 
 
-async def command_discount(message: types.Message):
+async def command_discount(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state:
+        await state.finish()
     await message.reply(text=MessageBox.DISCOUNT_MESSAGE, parse_mode='html')
     await message.delete()
 
@@ -142,7 +145,7 @@ def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(command_start, commands=['start'])
     dp.register_message_handler(command_help, commands=['help'])
     dp.register_message_handler(command_info, commands=['info'])
-    dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'))
+    dp.register_message_handler(command_discount, lambda message: message.text.startswith('Скидки'), state='*')
     # TODO: Добавить функцию с инлайн клавиатурой и сылками на нужные контакты
     dp.register_message_handler(command_makeorder, lambda message: message.text.startswith('Сделать'), state='*')
 

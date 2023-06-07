@@ -55,17 +55,24 @@ async def manage_admin_close(message: types.Message, state: FSMContext):
 """Загрузка опций в меню"""
 async def cmd_updateMenu(message: types.Message):
     await FSM_admin.photo.set()
-    await message.reply('Скидывай сюда нужную тебе фотографию')
+    await message.reply('Чтобы добавить позицию нужно выполнить 3 шага:\n'
+                        '1. Отправить фото\n'
+                        '2. Написать название фото (необходимо для БД)\n'
+                        '3. Написать сопровождающее собщение которое быдет видно покупателям\n'
+                        '<b>Скидывай сюда нужную тебе фотографию</b>', parse_mode='html')
 async def upload_photo(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['photo'] = message.photo[0].file_id
     await FSM_admin.next()
-    await message.reply('Введи название фото')
+    await message.reply('1. Отправить фото✅\n'
+                        '2. <b>Напиши название фото (необходимо для БД)</b>\n', parse_mode='html')
 async def upload_phName(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['phName'] = message.text
     await FSM_admin.next()
-    await message.reply('Введи сообщение, которое будет отправляться под фотографией')
+    await message.reply('1. Отправить фото✅\n'
+                        '2. Написать название фото (необходимо для БД)✅\n'
+                        '3. <b>Напиши сопровождающее собщение которое будет видно покупателям</b>', parse_mode='html')
 async def upload_phDescription(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['phDescription'] = message.text
@@ -73,7 +80,7 @@ async def upload_phDescription(message: types.Message, state: FSMContext):
     db.add_menu(result['photo'], result['phName'], result['phDescription'])
     await state.finish()
     await bot.send_message(chat_id=message.from_user.id,
-                           text='Всё готово',
+                           text='Всё готово✅',
                            reply_markup=KeyBoards.kb_db)
     await FSM_admin.dbase.set()
 
