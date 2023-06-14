@@ -30,6 +30,7 @@ async def add_admin(message: types.Message):
             await message.answer(f'Вы уже в списке администраторов, {message.from_user.full_name}')
     except:
         await message.answer('Не удалось обновить получателя заказов')
+
 async def delete_admin(message: types.Message):
     try:
         if not db.admin_exists(message.from_user.id):
@@ -119,6 +120,15 @@ async def get_client_data_admin(message: types.Message):
                                                                   f'Дата заказа: {rowOrder[1]}')
     else:
         await message.answer('Вы не в списке администраторов')
+
+async def get_admins_list(message: types.Message):
+    try:
+        for admin in db.get_admin_list():
+            await bot.send_message(message.from_user.id, text=f'ID: {admin[1]}\n'
+                                                              f'Name: {admin[2]}')
+    except:
+        await message.answer('Не удалось получить список получателей рассылки заказов')
+
 async def dbase_menu_close(message: types.Message, state: FSMContext):
     await state.finish()
     await bot.send_message(chat_id=message.from_user.id,
@@ -150,6 +160,8 @@ def register_handlers_admin(dp: Dispatcher):
                                        state=FSM_admin.dbase)
 
     # Выгрузка клиентов с заказами и выход из БД
+    dp.register_message_handler(get_admins_list, lambda message: message.text.startswith('Лист'),
+                                state=FSM_admin.dbase)
     dp.register_message_handler(get_client_data_admin, lambda message: message.text.startswith('Выгрузить'),
                                 state=FSM_admin.dbase)
     dp.register_message_handler(dbase_menu_close, lambda message: message.text.startswith('Вернуться'),

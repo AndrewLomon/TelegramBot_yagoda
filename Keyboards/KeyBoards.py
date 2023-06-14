@@ -14,4 +14,4 @@ kb_admin.add(kb1, kb2).add(kb3).row(kb4)
 
 #Админская клавиатура управления БД
 kb_db = ReplyKeyboardMarkup(one_time_keyboard=False, row_width=2, resize_keyboard=True)
-kb_db.add('Обновить меню', 'Удалить опции в меню').add('Выгрузить заказы').add('Вернуться в админку')
+kb_db.add('Обновить меню', 'Удалить опции в меню').add('Выгрузить заказы', 'Лист администраторов').add('Вернуться в админку')

@@ -74,6 +74,13 @@ class BotDB:
         data = self.cursor.fetchall()
         return data
 
+    def get_admin_list(self):
+        """Берём айди всех админов"""
+        query = "SELECT * FROM admins"
+        self.cursor.execute(query)
+        data = self.cursor.fetchall()
+        return data
+
     def add_menu(self, photo, name, description):
         """Добавляем новые данные в меню"""
         self.cursor.execute("INSERT INTO menu ('photo', 'name', 'description') VALUES (?, ?, ?)",
