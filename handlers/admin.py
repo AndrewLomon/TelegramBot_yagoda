@@ -28,7 +28,6 @@ async def manage_admin(message: types.Message):
                            reply_markup=KeyBoards.kb_admin)
 
 
-
 async def add_admin(message: types.Message):
     try:
         if not db.admin_exists(message.from_user.id):
@@ -128,7 +127,8 @@ async def cmd_delete_menu(message: types.Message):
             await bot.send_photo(message.from_user.id, col[1], f'\n{col[3]}')
             await bot.send_message(message.from_user.id,
                                    text='☝️',
-                                   reply_markup=InlineKeyboardMarkup().add(InlineKeyboardButton('Удалить', callback_data=f'del {col[2]}')))
+                                   reply_markup=InlineKeyboardMarkup().add(
+                                       InlineKeyboardButton('Удалить', callback_data=f'del {col[2]}')))
     else:
         await message.answer('На данный момент нет подгруженого меню')
     await message.delete()
@@ -144,24 +144,27 @@ async def run_delete_menu(callback: types.CallbackQuery):
 
 
 async def get_client_data_admin(message: types.Message):
-    if db.admin_exists(message.from_user.id):
-        for col in db.get_client_info():
-            count = 0
-            await bot.send_message(message.from_user.id, '_________________\n')
-            await bot.send_message(message.from_user.id, text=f'ID {col[1]}\n'
-                                                              f'Время авторизации {col[2]}\n'
-                                                              f'Имя {col[3]}\n'
-                                                              f'Телефон {col[4]}\n'
-                                                              f'Ник @{col[5]}\n'
-                                                              f'Адрес: {col[6]}')
-            for rowOrder in db.get_client_orders(col[1]):
-                count += 1
-                await bot.send_message(message.from_user.id, text=f'Заказ №{count}\n'
-                                                                  f'Объем клубники: {rowOrder[0]}\n'
-                                                                  f'Дата заказа: {rowOrder[1]}')
-    else:
-        await message.answer('Вы не в списке администраторов')
-
+    try:
+        if db.admin_exists(message.from_user.id):
+            for col in db.get_client_info():
+                count = 0
+                await bot.send_message(message.from_user.id, '_________________\n')
+                await bot.send_message(message.from_user.id, text=f'ID {col[1]}\n'
+                                                                  f'Время авторизации {col[2]}\n'
+                                                                  f'Имя {col[3]}\n'
+                                                                  f'Телефон {col[4]}\n'
+                                                                  f'Ник @{col[5]}\n'
+                                                                  f'Адрес: {col[6]}')
+                for rowOrder in db.get_client_orders(col[1]):
+                    count += 1
+                    await bot.send_message(message.from_user.id, text=f'Заказ №{count}\n'
+                                                                      f'Объем клубники: {rowOrder[0]}\n'
+                                                                      f'Дата заказа: {rowOrder[1]}')
+        else:
+            await message.answer('Вы не в списке администраторов')
+    except:
+        await message.answer('Клиентов в БД нет')
+        await bot.send_message(Config.BOT_OWNERS[0], "Была предпринята попытка выгрузки из пустой БД клиентов")
 
 
 async def get_admins_list(message: types.Message):
@@ -172,7 +175,6 @@ async def get_admins_list(message: types.Message):
     except:
         await message.answer('Не удалось получить список получателей рассылки заказов')
         await bot.send_message(Config.BOT_OWNERS[0], "Провалилась попытка получить список тех кто получает заказы")
-
 
 
 async def dbase_menu_close(message: types.Message, state: FSMContext):
