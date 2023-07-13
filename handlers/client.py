@@ -4,6 +4,7 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import MessageBox
+from Config import BOT_OWNERS
 from Keyboards import KeyBoards, InlineKB
 from create_bot import bot, db
 
@@ -44,16 +45,20 @@ async def command_discount(message: types.Message, state: FSMContext):
     await message.delete()
 
 async def get_menu(message: types.Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state:
-        await state.finish()
-    menu = db.get_menu()
-    if bool(len(menu)):
-        for col in menu:
-            await bot.send_photo(message.from_user.id, col[1], f'\n{col[3]}')
-    else:
-        await message.answer('На данный момент не подгруженого меню')
-    await message.delete()
+    try:
+        current_state = await state.get_state()
+        if current_state:
+            await state.finish()
+        menu = db.get_menu()
+        if bool(len(menu)):
+            for col in menu:
+                await bot.send_photo(message.from_user.id, col[1], f'\n{col[3]}')
+        else:
+            await message.answer('На данный момент нет подгруженого меню')
+        await message.delete()
+    except:
+        await message.answer('На данный момент нет подгруженого меню')
+        await bot.send_message(BOT_OWNERS[0], "Провалилась попытка выслать меню")
 
 # Начало диалога заказа продукта
 async def command_makeorder(message: types.Message, state: FSMContext):
@@ -70,7 +75,8 @@ async def command_makeorder(message: types.Message, state: FSMContext):
         await FSM_client.volume_berry.set()
         await message.delete()
     except:
-        await bot.send_message(uid, 'Что-то пошло не так с командой сделать заказ')
+        await bot.send_message(uid, 'Что-то пошло не так с командой сделать заказ, попробуйте заново или обратитесь к @Lomonosov_Andrew')
+        await bot.send_message(BOT_OWNERS[0], "Провалилась попытка инициализировать заказ")
 
 
 async def cancel_handler(message: types.Message, state: FSMContext):
@@ -93,8 +99,10 @@ async def request_extra_volume_berry(message: types.Message, state: FSMContext):
             await message.delete()
         else:
             await message.answer('Извините, объем клубники должен быть больше равен 3, 6, 9кг или больше')
-    except:
+    except ValueError:
         await message.answer('Выберите пожалуйста опцию выше или впишите число')
+        await bot.send_message(BOT_OWNERS[0], "Клиенту не удалось ввести нужный объем клубники")
+
 
 
 async def request_location(message: types.Message, state: FSMContext):
@@ -107,9 +115,13 @@ async def request_location(message: types.Message, state: FSMContext):
             await FSM_client.client_phone.set()
             await message.delete()
         else:
-            await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером и попробуйте ещё раз')
+            await message.answer('Не могу разобрать адрес, проверьте сходится ли он с примером '
+                                 'или попробуйте заполнить приведённый шаблон снова')
     except:
         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
+        await bot.send_message(BOT_OWNERS[0], "Клиенту не удалось ввести нужный адрес")
+
+
 
 async def request_phone(message: types.Message, state: FSMContext):
     try:
@@ -137,6 +149,8 @@ async def request_phone(message: types.Message, state: FSMContext):
             await message.answer('Не могу разобрать ваш номер телефона, сверьтесь с примером и попробуйте ещё раз')
     except:
         await message.answer('Я вас не понимаю, попробуйте ещё раз или выберете одну из команд ниже')
+        await bot.send_message(BOT_OWNERS[0], "Клиенту не удалось номер телефона")
+
 
 
 def register_handlers_client(dp: Dispatcher):

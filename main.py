@@ -1,4 +1,4 @@
-# This is Telegram Bot for Srawberry shop
+# This is Telegram Bot for Strawberry shop
 from aiogram import executor
 import callback
 from create_bot import dp
@@ -9,12 +9,10 @@ async def on_startup(_):
     print('Okay, lets go!')
 
 
-
-#Выполнение зарегистрированных функций
+# Выполнение зарегистрированных функций
 admin.register_handlers_admin(dp)
 callback.register_handlers_callback(dp)
 client.register_handlers_client(dp)
-
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

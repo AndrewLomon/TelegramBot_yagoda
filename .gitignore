@@ -1,5 +1,5 @@
 .env
-Config.py
+yagoda.db
 .venv/
 __pycache__/
 .idea/
